@@ -1,7 +1,9 @@
 package com.currency.util;
 
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -15,9 +17,11 @@ public class CSVReader {
 	CurrencyConvertor currencyConvertor = new CurrencyConvertor();
 
 	public String[] readCSV() throws IOException {
-		File file = new File(getClass().getClassLoader().getResource("Currency_Table.csv").getFile());
-
-		Scanner scanner = new Scanner(file);
+		// File file = new
+		// File(getClass().getClassLoader().getResource("Currency_Table.csv").getFile());
+		InputStream in = getClass().getClassLoader().getResourceAsStream("Currency_Table.csv");
+		BufferedReader input = new BufferedReader(new InputStreamReader(in));
+		Scanner scanner = new Scanner(input);
 		while (scanner.hasNext()) {
 			CurrencyConvertor.matrixRow++;
 			List<String> line = parseLine(scanner.nextLine());
@@ -27,7 +31,9 @@ public class CSVReader {
 
 		}
 		CurrencyConvertor.matrixCol = CurrencyConvertor.dataIndex / CurrencyConvertor.matrixRow;
-		scanner = new Scanner((file));
+		InputStream in1 = getClass().getClassLoader().getResourceAsStream("Currency_Table.csv");
+		BufferedReader input1 = new BufferedReader(new InputStreamReader(in1));
+		scanner = new Scanner((input1));
 		String[] data = new String[CurrencyConvertor.dataIndex];
 		int i = 0;
 		while (scanner.hasNext()) {

@@ -1,9 +1,13 @@
 package com.currency.converter;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.regex.Pattern;
-
+import java.util.stream.Collectors;
 import com.currency.util.CSVReader;
 
 public class CurrencyConvertor {
@@ -14,6 +18,7 @@ public class CurrencyConvertor {
 	static String[] data;
 	static String[][] matrix;
 	static String input;
+	static HashMap<Integer, String> hmap;
 
 	public static int getDataIndex() {
 		return dataIndex;
@@ -81,83 +86,14 @@ public class CurrencyConvertor {
 
 	public static void main(String args[]) {
 		Scanner scan = new Scanner(System.in);
+		hmap = new HashMap<Integer, String>();
 		try {
 			loadCSVinMatrixData(scan);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 		takeUserInput(scan);
 		findRateOrIntermediateCountry(matrix);
-
-	}
-
-	private static void loadCSVinMatrixData(Scanner scan) throws IOException {
-		String[] data;
-		CSVReader readCSV = new CSVReader();
-		data = readCSV.readCSV();
-		matrix = new String[matrixRow][matrixCol];
-
-		int index = 0;
-		for (int i = 0; i < matrixRow; i++) {
-			for (int j = 0; j < matrixCol; j++) {
-				matrix[i][j] = data[index++].toString();
-			}
-		}
-	}
-
-	private static void findRateOrIntermediateCountry(String[][] matrix) {
-		int fromRowIndex = findIndex(matrix, fromCountry, true);
-		int toColIndex = findIndex(matrix, toCountry, false);
-		Double amount = 1.0;
-		String transferAmt = "";
-		if (Pattern.compile("[0-9]").matcher(matrix[fromRowIndex][toColIndex]).find()) {
-			// System.out.println("Direct Transfer is Possible");
-			amount = calculate(matrix[fromRowIndex][toColIndex], transferAmount);
-			if (toCountry.equals("JPY")) {
-				transferAmt = Integer.toString(amount.intValue());
-			} else {
-				transferAmt = String.format("%1.2f", amount);
-			}
-			System.out.println(fromCountry + " " + transferAmount + " = " + toCountry + " " + transferAmt);
-
-		} else {
-			Double finalAmountAfterInterTransfer = 0.0;
-			String interimCntry1 = "";
-			interimCntry1 = searchTransitFromMatrix(matrix, fromCountry, toCountry);
-			// first country
-			fromRowIndex = findIndex(matrix, fromCountry, true);
-			int internContryIndex = findIndex(matrix, interimCntry1, false);
-			// amount = calculate(matrix[fromRowIndex][internContryIndex], transferAmount);
-
-			if (!Pattern.compile("[0-9]").matcher(matrix[fromRowIndex][internContryIndex]).find()) {
-				String interCountry2 = matrix[fromRowIndex][internContryIndex];
-				fromRowIndex = findIndex(matrix, interimCntry1, true);
-				internContryIndex = findIndex(matrix, interCountry2, false);
-				amount = calculate(matrix[fromRowIndex][internContryIndex], transferAmount);
-				// finalAmountAfterInterTransfer =
-				// calculate(matrix[internContryIndex][toColIndex], amount);
-			} else {
-				amount = calculate(matrix[fromRowIndex][internContryIndex], transferAmount);
-
-			}
-
-			if (!Pattern.compile("[0-9]").matcher(matrix[internContryIndex][toColIndex]).find()) {
-				String interCountry3 = matrix[internContryIndex][toColIndex];
-				fromRowIndex = findIndex(matrix, interimCntry1, true);
-				internContryIndex = findIndex(matrix, interCountry3, false);
-				amount = calculate(matrix[fromRowIndex][internContryIndex], amount);
-				finalAmountAfterInterTransfer = calculate(matrix[internContryIndex][toColIndex], amount);
-			} else {
-				finalAmountAfterInterTransfer = calculate(matrix[internContryIndex][toColIndex], amount);
-			}
-			if (toCountry.equalsIgnoreCase("JPY")) {
-				transferAmt = Integer.toString(finalAmountAfterInterTransfer.intValue());
-			} else {
-				transferAmt = String.format("%1.2f", finalAmountAfterInterTransfer);
-			}
-			System.out.println(fromCountry + " " + transferAmount + " = " + toCountry + " " + transferAmt);
-		}
 	}
 
 	private static void takeUserInput(Scanner scan) {
@@ -176,46 +112,88 @@ public class CurrencyConvertor {
 		}
 	}
 
-	public static double calculate(String matrix, double transferAmount2) {
-		return (transferAmount2 * Double.parseDouble(matrix));
+	private static void loadCSVinMatrixData(Scanner scan) throws IOException {
+		String[] data;
+		CSVReader readCSV = new CSVReader();
+		data = readCSV.readCSV();
+		matrix = new String[matrixRow][matrixCol];
+
+		int index = 0;
+		for (int i = 0; i < matrixRow; i++) {
+			// add countries in hmap for getting index
+			CurrencyConvertor.hmap.put(i, data[i]);
+			for (int j = 0; j < matrixCol; j++) {
+				matrix[i][j] = data[index++].toString();
+			}
+		}
 	}
 
-	static int findIndex(String[][] matrix, String dataForIndex, boolean rowSearch) {
-		// System.out.println("matrix ::" + matrix[1][0]);
-		try {
-			if (rowSearch) {
-				for (int i = 0; i < matrixRow; i++) {
-					if (matrix[i][0].contains(dataForIndex.trim())) {
-						// System.out.println("in row search: " + i);
-						return i;
-					}
-				}
+	private static void findRateOrIntermediateCountry(String[][] matrix) {
+		int fromRowIndex = findIndex(fromCountry);
+		int toColIndex = findIndex(toCountry);
+		Double amount = 1.0;
+		String transferAmt = "";
+		if (Pattern.compile("[0-9]").matcher(matrix[fromRowIndex][toColIndex]).find()) {
+			amount = calculate(matrix[fromRowIndex][toColIndex], transferAmount);
+			if (toCountry.equals("JPY")) {
+				transferAmt = Integer.toString(amount.intValue());
 			} else {
-				for (int i = 0; i < matrixRow; i++) {
-					if (matrix[0][i].contains(dataForIndex.trim())) {
-						// System.out.println("in col search: " + i);
-						return i;
-					}
-				}
+				transferAmt = String.format("%1.2f", amount);
 			}
+			System.out.println(fromCountry + " " + transferAmount + " = " + toCountry + " " + transferAmt);
+		} else {
+			Double finalAmountAfterInterTransfer = 0.0;
+			String interimCntry1 = "";
+			interimCntry1 = matrix[findIndex(fromCountry)][findIndex(toCountry)];
+
+			fromRowIndex = findIndex(fromCountry);
+			int internContryIndex = findIndex(interimCntry1);
+			if (!Pattern.compile("[0-9]").matcher(matrix[fromRowIndex][internContryIndex]).find()) {
+				String interCountry2 = matrix[fromRowIndex][internContryIndex];
+				fromRowIndex = findIndex(interimCntry1);
+				internContryIndex = findIndex(interCountry2);
+				amount = calculate(matrix[fromRowIndex][internContryIndex], transferAmount);
+			} else {
+				amount = calculate(matrix[fromRowIndex][internContryIndex], transferAmount);
+			}
+
+			if (!Pattern.compile("[0-9]").matcher(matrix[internContryIndex][toColIndex]).find()) {
+				String interCountry3 = matrix[internContryIndex][toColIndex];
+				fromRowIndex = findIndex(interimCntry1);
+				internContryIndex = findIndex(interCountry3);
+				amount = calculate(matrix[fromRowIndex][internContryIndex], amount);
+				finalAmountAfterInterTransfer = calculate(matrix[internContryIndex][toColIndex], amount);
+			} else {
+				finalAmountAfterInterTransfer = calculate(matrix[internContryIndex][toColIndex], amount);
+			}
+
+			if (toCountry.equalsIgnoreCase("JPY")) {
+				transferAmt = Integer.toString(finalAmountAfterInterTransfer.intValue());
+			} else {
+				transferAmt = String.format("%1.2f", finalAmountAfterInterTransfer);
+			}
+			System.out.println(fromCountry + " " + transferAmount + " = " + toCountry + " " + transferAmt);
+		}
+	}
+
+	private static int findIndex(String country) {
+		try {
+			Set<Integer> index = getKeysByValue(hmap, country);
+			return index.iterator().next();
 		} catch (Exception e) {
-			System.out.println("Enter a valid country!");
-			System.exit(0);
+			System.out.println("Enter valid currency");
+			System.exit(1);
 		}
 		return 0;
 	}
 
-	static String searchTransitFromMatrix(String[][] matrix, String fromContry, String toCountry) {
-		for (int i = 0; i < matrixRow; i++) {
-			if (matrix[i][0].contains(fromContry.trim())) {
-				for (int j = 0; j < matrixCol; j++) {
-					if (matrix[0][j].contains(toCountry.trim())) {
-						// System.out.print("Transfer will be done via : " + matrix[i][j] + "\t");
-						return matrix[i][j];
-					}
-				}
-			}
-		}
-		return null;
+	private static <T, E> Set<T> getKeysByValue(Map<T, E> map, E value) {
+		return map.entrySet().stream().filter(entry -> Objects.equals(entry.getValue(), value)).map(Map.Entry::getKey)
+				.collect(Collectors.toSet());
 	}
+
+	public static double calculate(String matrix, double transferAmount2) {
+		return (transferAmount2 * Double.parseDouble(matrix));
+	}
+
 }

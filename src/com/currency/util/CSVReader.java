@@ -17,8 +17,6 @@ public class CSVReader {
 	CurrencyConvertor currencyConvertor = new CurrencyConvertor();
 
 	public String[] readCSV() throws IOException {
-		// File file = new
-		// File(getClass().getClassLoader().getResource("Currency_Table.csv").getFile());
 		InputStream in = getClass().getClassLoader().getResourceAsStream("Currency_Table.csv");
 		BufferedReader input = new BufferedReader(new InputStreamReader(in));
 		Scanner scanner = new Scanner(input);
@@ -28,7 +26,6 @@ public class CSVReader {
 			for (String text : line) {
 				CurrencyConvertor.dataIndex++;
 			}
-
 		}
 		CurrencyConvertor.matrixCol = CurrencyConvertor.dataIndex / CurrencyConvertor.matrixRow;
 		InputStream in1 = getClass().getClassLoader().getResourceAsStream("Currency_Table.csv");
@@ -38,12 +35,10 @@ public class CSVReader {
 		int i = 0;
 		while (scanner.hasNext()) {
 			List<String> line = parseLine(scanner.nextLine());
-			// System.out.println("Line" + line);
 			for (String text : line) {
 				if (!text.isEmpty())
 					data[i++] = text.toString();
 			}
-
 		}
 		scanner.close();
 		return data;
@@ -58,9 +53,7 @@ public class CSVReader {
 	}
 
 	public static List<String> parseLine(String cvsLine, char separators, char customQuote) {
-
 		List<String> result = new ArrayList<>();
-
 		// if empty, return!
 		if (cvsLine == null && cvsLine.isEmpty()) {
 			return result;
@@ -82,7 +75,6 @@ public class CSVReader {
 		char[] chars = cvsLine.toCharArray();
 
 		for (char ch : chars) {
-
 			if (inQuotes) {
 				startCollectChar = true;
 				if (ch == customQuote) {
@@ -103,9 +95,7 @@ public class CSVReader {
 				}
 			} else {
 				if (ch == customQuote) {
-
 					inQuotes = true;
-
 					// Fixed : allow "" in empty quote enclosed
 					if (chars[0] != '"' && customQuote == '\"') {
 						curVal.append('"');
@@ -119,10 +109,8 @@ public class CSVReader {
 				} else if (ch == separators) {
 
 					result.add(curVal.toString());
-
 					curVal = new StringBuffer();
 					startCollectChar = false;
-
 				} else if (ch == '\r') {
 					// ignore LF characters
 					continue;
@@ -139,5 +127,4 @@ public class CSVReader {
 		result.add(curVal.toString());
 		return result;
 	}
-
 }

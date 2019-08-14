@@ -7,31 +7,31 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-
-import com.currency.converter.CurrencyConvertor;
+import com.currency.model.CurrencyModel;
 
 public class CSVReader {
 
 	private static final char DEFAULT_SEPARATOR = ',';
 	private static final char DEFAULT_QUOTE = '"';
-	CurrencyConvertor currencyConvertor = new CurrencyConvertor();
+	// CurrencyConvertor currencyConvertor = new CurrencyConvertor();
+	CurrencyModel model = new CurrencyModel();
 
 	public String[] readCSV() throws IOException {
 		InputStream in = getClass().getClassLoader().getResourceAsStream("Currency_Table.csv");
 		BufferedReader input = new BufferedReader(new InputStreamReader(in));
 		Scanner scanner = new Scanner(input);
 		while (scanner.hasNext()) {
-			CurrencyConvertor.matrixRow++;
+			model.matrixRow++;
 			List<String> line = parseLine(scanner.nextLine());
 			for (String text : line) {
-				CurrencyConvertor.dataIndex++;
+				model.setDataIndex(model.getDataIndex() + 1);
 			}
 		}
-		CurrencyConvertor.matrixCol = CurrencyConvertor.dataIndex / CurrencyConvertor.matrixRow;
+		model.setMatrixCol(model.getDataIndex() / model.getMatrixRow());
 		InputStream in1 = getClass().getClassLoader().getResourceAsStream("Currency_Table.csv");
 		BufferedReader input1 = new BufferedReader(new InputStreamReader(in1));
 		scanner = new Scanner((input1));
-		String[] data = new String[CurrencyConvertor.dataIndex];
+		String[] data = new String[model.getDataIndex()];
 		int i = 0;
 		while (scanner.hasNext()) {
 			List<String> line = parseLine(scanner.nextLine());
